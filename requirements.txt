@@ -1,0 +1,21 @@
+Build a starfighter simulator game. This is a browser based game.
+
+Use html, css, javascript, and three.js to build it.
+
+Make sure code is abstracted into it's own files and built in a way that is easy to add features later.
+
+For example, there will be many enemy types. Make sure common enemy code is in it's own file and easily reusable. Then new enemy types can build off that.
+
+Same for the players ship. It will be upgradable. Make sure the code is easily reusable and parts of the ship can be swapped out or upgraded.
+
+The user interface should be simple. With  a minimap in the bottom right. The top left hsould have a panel with text about current speed, fuel.
+
+Top right shows current objectives.
+
+The players starfighter should be able to move around the screen. The world is a big open space. There are many planets and stars you can visit.
+
+Ther camera is a 3rd person camera.
+
+The starfighter has weapons that can shoot projectiles.
+
+There are enemy starfighters that the player can dogfoight with. Randomly generate these. I don't want a lot of them. The game is mainly about the player exploring the world.

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Starfighter Simulator</title>
+		<link rel="stylesheet" href="css/style.css" />
+	</head>
+	<body>
+		<div id="game-container">
+			<canvas id="game-canvas"></canvas>
+			<div id="ui-overlay">
+				<div id="top-left-panel" class="ui-panel">
+					<div id="speed">Speed: 0</div>
+					<div id="fuel">Fuel: 100%</div>
+				</div>
+				<div id="top-right-panel" class="ui-panel">
+					<div id="objectives">Current Objectives:</div>
+				</div>
+				<div id="minimap" class="ui-panel"></div>
+			</div>
+		</div>
+
+		<!-- Three.js -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+		<!-- Core -->
+		<script src="js/core/Game.js"></script>
+		<script src="js/core/Scene.js"></script>
+		<script src="js/core/Controls.js"></script>
+
+		<!-- Entities -->
+		<script src="js/entities/Entity.js"></script>
+		<script src="js/entities/Ship.js"></script>
+		<script src="js/entities/PlayerShip.js"></script>
+		<script src="js/entities/EnemyShip.js"></script>
+		<script src="js/entities/Projectile.js"></script>
+
+		<!-- World -->
+		<script src="js/world/CelestialBody.js"></script>
+		<script src="js/world/Planet.js"></script>
+		<script src="js/world/Star.js"></script>
+		<script src="js/world/WorldGenerator.js"></script>
+
+		<!-- UI -->
+		<script src="js/ui/UIManager.js"></script>
+		<script src="js/ui/Minimap.js"></script>
+
+		<!-- Main -->
+		<script src="js/main.js"></script>
+	</body>
+</html>
