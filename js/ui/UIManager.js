@@ -7,15 +7,16 @@ class UIManager {
 		this.fuelElement = document.getElementById("fuel");
 		this.objectivesElement = document.getElementById("objectives");
 		this.minimapElement = document.getElementById("minimap");
+		this.controlsElement = document.getElementById("controls");
 
 		// Create minimap
 		this.minimap = new Minimap(this.game, this.minimapElement);
 
 		// Initialize objectives
 		this.objectives = [
-			"Explore the star system",
-			"Locate and visit planets",
-			"Engage enemy ships when encountered",
+			"Explore the solar system",
+			"Visit Earth's moon",
+			"Navigate through the asteroid belt",
 		];
 
 		this.updateObjectives();
