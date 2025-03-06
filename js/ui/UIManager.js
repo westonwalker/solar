@@ -9,6 +9,20 @@ class UIManager {
 		this.minimapElement = document.getElementById("minimap");
 		this.controlsElement = document.getElementById("controls");
 
+		// Planet info panel elements
+		this.planetInfoPanel = document.getElementById("planet-info-panel");
+		this.planetNameElement = document.getElementById("planet-name");
+		this.planetTypeElement = document.getElementById("planet-type");
+		this.planetSizeElement = document.getElementById("planet-size");
+		this.planetDistanceElement = document.getElementById("planet-distance");
+		this.planetAtmosphereElement =
+			document.getElementById("planet-atmosphere");
+		this.planetDescriptionElement =
+			document.getElementById("planet-description");
+
+		// Currently targeted planet
+		this.targetedPlanet = null;
+
 		// Create minimap
 		this.minimap = new Minimap(this.game, this.minimapElement);
 
@@ -69,6 +83,55 @@ class UIManager {
 			this.objectives.splice(index, 1);
 			this.updateObjectives();
 		}
+	}
+
+	// Show planet information panel with details about the targeted planet
+	showPlanetInfo(planet) {
+		if (!planet) return;
+
+		// If we're already showing info for this planet, don't update
+		if (this.targetedPlanet === planet) return;
+
+		console.log("UIManager: Showing info for planet", planet.name);
+
+		this.targetedPlanet = planet;
+
+		// Get planet details
+		const details = planet.getPlanetDetails();
+
+		// Update UI elements
+		this.planetNameElement.textContent = details.name;
+		this.planetTypeElement.textContent = `Type: ${details.type}`;
+		this.planetSizeElement.textContent = `Size: ${details.size}`;
+		this.planetDistanceElement.textContent = `Distance from Sun: ${details.distanceFromSun}`;
+		this.planetAtmosphereElement.textContent = `Atmosphere: ${details.atmosphere}`;
+		this.planetDescriptionElement.textContent = details.description;
+
+		// Show the panel - make sure it's visible first, then fade in
+		this.planetInfoPanel.style.display = "block";
+
+		// Force a reflow to ensure the display change takes effect before changing opacity
+		void this.planetInfoPanel.offsetWidth;
+
+		// Add a small delay before fading in (for transition effect)
+		setTimeout(() => {
+			this.planetInfoPanel.style.opacity = "1";
+		}, 10);
+	}
+
+	// Hide planet information panel
+	hidePlanetInfo() {
+		if (!this.planetInfoPanel) return;
+
+		this.targetedPlanet = null;
+
+		// Fade out
+		this.planetInfoPanel.style.opacity = "0";
+
+		// Hide after transition
+		setTimeout(() => {
+			this.planetInfoPanel.style.display = "none";
+		}, 300);
 	}
 
 	showMessage(message, duration = 3000) {

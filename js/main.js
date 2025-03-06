@@ -59,6 +59,16 @@ document.addEventListener("DOMContentLoaded", () => {
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+        
+        #planet-info-panel {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #planet-info-panel h3 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
     `;
 	document.head.appendChild(style);
 });

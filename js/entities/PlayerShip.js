@@ -284,6 +284,9 @@ class PlayerShip extends Ship {
 			this.fireWeapon(0);
 		}
 
+		// Update planet targeting
+		this.updateTargeting();
+
 		super.update(deltaTime);
 	}
 
@@ -352,5 +355,99 @@ class PlayerShip extends Ship {
 
 	stopShip() {
 		this.isBreaking = true;
+	}
+
+	updateTargeting() {
+		// Ensure Planet class is defined
+		if (typeof Planet === "undefined") {
+			console.error("Planet class is not defined");
+			return;
+		}
+
+		// Get the forward direction of the ship
+		const forward = new THREE.Vector3(0, 0, -1);
+		forward.applyQuaternion(this.quaternion);
+
+		// Maximum targeting distance
+		const maxDistance = 5000;
+
+		// Find all planets in the game
+		const planets = this.game.entities.filter(
+			(entity) => entity instanceof Planet
+		);
+
+		if (planets.length === 0) {
+			console.warn("No planets found in game entities");
+		}
+
+		// Track which planets should be targeted
+		const planetsToTarget = [];
+
+		// Check for planets in the forward direction
+		planets.forEach((planet) => {
+			// Calculate distance to planet
+			const distance = this.position.distanceTo(planet.position);
+
+			// Skip if too far away
+			if (distance > maxDistance) return;
+
+			// Calculate direction to planet
+			const directionToTarget = new THREE.Vector3();
+			directionToTarget
+				.subVectors(planet.position, this.position)
+				.normalize();
+
+			// Calculate the overall angle between forward vector and direction to planet
+			const angle = forward.angleTo(directionToTarget);
+
+			// Calculate horizontal angle by projecting vectors onto the XZ plane
+			const forwardXZ = new THREE.Vector3(
+				forward.x,
+				0,
+				forward.z
+			).normalize();
+			const directionXZ = new THREE.Vector3(
+				directionToTarget.x,
+				0,
+				directionToTarget.z
+			).normalize();
+			const horizontalAngle = forwardXZ.angleTo(directionXZ);
+
+			// Calculate vertical angle by comparing Y components
+			const verticalAngle = Math.abs(
+				Math.asin(forward.y) - Math.asin(directionToTarget.y)
+			);
+
+			// More forgiving targeting conditions:
+			// - Horizontal angle must be within 10 degrees (same as before)
+			// - Vertical angle can be within 20 degrees (more forgiving)
+			// - OR overall angle is very small (5 degrees)
+			const horizontalThreshold = Math.PI / 18; // 10 degrees
+			const verticalThreshold = Math.PI / 9; // 20 degrees
+			const overallThreshold = Math.PI / 36; // 5 degrees
+
+			const isTargeted =
+				(horizontalAngle < horizontalThreshold &&
+					verticalAngle < verticalThreshold) ||
+				angle < overallThreshold;
+
+			if (isTargeted) {
+				// Add to the list of planets to target
+				planetsToTarget.push(planet);
+			}
+		});
+
+		// Update targeting status for all planets
+		planets.forEach((planet) => {
+			const shouldBeTargeted = planetsToTarget.includes(planet);
+
+			// Only show/hide if the targeting status has changed
+			if (shouldBeTargeted && !planet.isTargeted) {
+				console.log(`Targeting planet: ${planet.name}`);
+				planet.showReticule();
+			} else if (!shouldBeTargeted && planet.isTargeted) {
+				planet.hideReticule();
+			}
+		});
 	}
 }

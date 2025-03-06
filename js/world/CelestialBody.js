@@ -6,7 +6,16 @@ class CelestialBody extends Entity {
 		this.rotationSpeed = options.rotationSpeed || 0.01;
 		this.orbitSpeed = options.orbitSpeed || 0;
 		this.orbitDistance = options.orbitDistance || 0;
-		this.orbitCenter = options.orbitCenter || null;
+
+		// Ensure orbitCenter is a Vector3 object
+		if (options.orbitCenter) {
+			this.orbitCenter = options.orbitCenter.clone
+				? options.orbitCenter.clone()
+				: new THREE.Vector3(0, 0, 0);
+		} else {
+			this.orbitCenter = new THREE.Vector3(0, 0, 0);
+		}
+
 		this.isPlanetMoon = false;
 		this.parentPlanet = null;
 

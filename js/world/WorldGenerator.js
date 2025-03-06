@@ -34,16 +34,25 @@ class WorldGenerator {
 		const starMaterial = new THREE.PointsMaterial({
 			color: 0xffffff,
 			size: 2,
-			sizeAttenuation: false,
+			sizeAttenuation: false, // Stars don't get smaller with distance
 		});
 
 		const positions = new Float32Array(this.numStars * 3);
 
+		// Far distance for stars - much larger than the solar system
+		const starDistance = this.worldSize * 5; // 5x the world size
+
 		for (let i = 0; i < this.numStars; i++) {
 			const i3 = i * 3;
-			positions[i3] = (Math.random() - 0.5) * this.worldSize;
-			positions[i3 + 1] = (Math.random() - 0.5) * this.worldSize;
-			positions[i3 + 2] = (Math.random() - 0.5) * this.worldSize;
+
+			// Generate random direction vector (normalized)
+			const theta = Math.random() * Math.PI * 2; // Horizontal angle
+			const phi = Math.acos(2 * Math.random() - 1); // Vertical angle
+
+			// Convert spherical coordinates to Cartesian
+			positions[i3] = starDistance * Math.sin(phi) * Math.cos(theta);
+			positions[i3 + 1] = starDistance * Math.sin(phi) * Math.sin(theta);
+			positions[i3 + 2] = starDistance * Math.cos(phi);
 		}
 
 		starGeometry.setAttribute(
@@ -66,8 +75,8 @@ class WorldGenerator {
 
 		// Scale factor for distances (not to actual scale, but to maintain playability)
 		// Real distances would make the game unplayable
-		const distanceScale = 800;
-		const sizeScale = 10;
+		const distanceScale = 6000;
+		const sizeScale = 60;
 
 		// Create planets with real data (scaled)
 		// Distances in AU, sizes in Earth radii (roughly)
@@ -113,9 +122,9 @@ class WorldGenerator {
 					{
 						name: "Moon",
 						radius: 0.27 * sizeScale,
-						distance: 30, // Distance from Earth
+						distance: 90, // Increased from 30 to 90 to account for larger Earth
 						color: 0xcccccc,
-						orbitSpeed: 0.4,
+						orbitSpeed: 0.05,
 						rotationSpeed: 0.005,
 					},
 				],
@@ -213,17 +222,19 @@ class WorldGenerator {
 			const z = Math.sin(angle) * planetData.distance;
 
 			const planet = new Planet(this.game, {
+				name: planetData.name,
 				radius: planetData.radius,
 				type: planetData.type,
 				color: planetData.color,
-				hasRings: planetData.rings,
+				rings: planetData.rings,
 				ringColor: planetData.ringColor,
-				hasAtmosphere: planetData.atmosphere,
+				atmosphere: planetData.atmosphere,
 				atmosphereColor: planetData.atmosphereColor,
 				rotationSpeed: planetData.rotationSpeed,
 				orbitSpeed: planetData.orbitSpeed,
 				orbitDistance: planetData.distance,
 				orbitCenter: sun.position,
+				distance: planetData.distance, // Pass distance from sun
 			});
 
 			planet.setPosition(x, 0, z);
@@ -262,7 +273,7 @@ class WorldGenerator {
 				rotationSpeed: moonData.rotationSpeed,
 				orbitSpeed: moonData.orbitSpeed,
 				orbitDistance: moonData.distance,
-				orbitCenter: planet.position, // Moon orbits around its planet
+				orbitCenter: planet.position.clone(), // Clone the position to avoid reference issues
 			});
 
 			// Position relative to planet
@@ -294,7 +305,7 @@ class WorldGenerator {
 
 			// Create a small rocky "planet" for each asteroid
 			const asteroid = new Planet(this.game, {
-				radius: 0.5 + Math.random() * 3, // Larger random size (was 0.05 + Math.random() * 0.2)
+				radius: 1.5 + Math.random() * 9, // Increased by 3x (was 0.5 + Math.random() * 3)
 				type: "rocky",
 				color: 0x888888 + Math.random() * 0x222222, // Slight color variation
 				rotationSpeed: (Math.random() - 0.5) * 0.02, // Random rotation

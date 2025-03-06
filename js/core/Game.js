@@ -22,7 +22,7 @@ class Game {
 			75,
 			window.innerWidth / window.innerHeight,
 			0.1,
-			50000
+			100000
 		);
 
 		// Create renderer
@@ -38,6 +38,7 @@ class Game {
 
 		// Initialize UI
 		this.uiManager = new UIManager(this);
+		this.ui = this.uiManager;
 
 		// Create world
 		this.worldGenerator = new WorldGenerator(this);
@@ -49,8 +50,8 @@ class Game {
 
 		// Position player near Earth if Earth position is available
 		if (this.earthPosition) {
-			// Position the player 50 units away from Earth
-			const offsetDistance = 50;
+			// Position the player 150 units away from Earth (increased from 50 to account for larger Earth)
+			const offsetDistance = 150;
 			this.player.setPosition(
 				this.earthPosition.x + offsetDistance,
 				this.earthPosition.y + 20,

@@ -16,9 +16,6 @@ class Star extends CelestialBody {
 				options.position.z || 0
 			);
 		}
-
-		// Add to game entities
-		this.game.addEntity(this);
 	}
 
 	createStarMesh(options) {
