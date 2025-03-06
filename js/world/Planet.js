@@ -17,6 +17,11 @@ class Planet extends CelestialBody {
 		this.description = this.generateDescription();
 
 		this.createPlanetMesh(options);
+
+		// Create orbital path if this planet orbits around something
+		if (this.orbitDistance > 0 && this.orbitCenter) {
+			this.createOrbitalPath();
+		}
 	}
 
 	createPlanetMesh(options) {
@@ -51,10 +56,11 @@ class Planet extends CelestialBody {
 			this.addRings(options.ringColor);
 		}
 
-		// Create reticule (initially hidden)
-		this.createReticule();
-
+		// Add to scene first
 		this.game.scene.add(this.mesh);
+
+		// Create reticule (initially hidden) after mesh is added to scene
+		this.createReticule();
 	}
 
 	// Generate a description based on planet type and characteristics
@@ -114,6 +120,14 @@ class Planet extends CelestialBody {
 	}
 
 	createReticule() {
+		// Only create reticule if mesh exists
+		if (!this.mesh) {
+			console.warn(
+				`Cannot create reticule for ${this.name}: mesh not initialized`
+			);
+			return;
+		}
+
 		// Create a reticule group
 		this.reticule = new THREE.Group();
 
@@ -154,6 +168,16 @@ class Planet extends CelestialBody {
 	}
 
 	showReticule() {
+		// Check if reticule exists and is not already targeted
+		if (!this.reticule) {
+			// Reticule doesn't exist, try to create it if mesh exists
+			if (this.mesh) {
+				this.createReticule();
+			} else {
+				return; // Can't show reticule without a mesh
+			}
+		}
+
 		if (this.reticule && !this.isTargeted) {
 			this.reticule.visible = true;
 			this.isTargeted = true;
@@ -171,6 +195,7 @@ class Planet extends CelestialBody {
 	}
 
 	hideReticule() {
+		// Only hide if reticule exists and is currently targeted
 		if (this.reticule && this.isTargeted) {
 			this.reticule.visible = false;
 			this.isTargeted = false;
@@ -263,7 +288,12 @@ class Planet extends CelestialBody {
 		}
 
 		// Make reticule face the camera if it's visible
-		if (this.reticule && this.reticule.visible && this.game.camera) {
+		if (
+			this.reticule &&
+			this.reticule.visible &&
+			this.game &&
+			this.game.camera
+		) {
 			// Get the direction from the planet to the camera
 			const cameraDirection = new THREE.Vector3();
 			cameraDirection
@@ -277,5 +307,43 @@ class Planet extends CelestialBody {
 				this.position.z + cameraDirection.z
 			);
 		}
+	}
+
+	// Create a visible orbital path for the planet
+	createOrbitalPath() {
+		// Create a circle geometry for the orbital path
+		const segments = 128; // Higher number for smoother circle
+		const geometry = new THREE.BufferGeometry();
+
+		// Create points for a complete circle
+		const vertices = [];
+		for (let i = 0; i <= segments; i++) {
+			const theta = (i / segments) * Math.PI * 2;
+			const x = Math.cos(theta) * this.orbitDistance;
+			const z = Math.sin(theta) * this.orbitDistance;
+			vertices.push(x, 0, z);
+		}
+
+		geometry.setAttribute(
+			"position",
+			new THREE.Float32BufferAttribute(vertices, 3)
+		);
+
+		// Create a light gray line material
+		const material = new THREE.LineBasicMaterial({
+			color: 0xaaaaaa,
+			transparent: true,
+			opacity: 0.3,
+			linewidth: 1,
+		});
+
+		// Create the line and add it to the scene
+		const orbitalPath = new THREE.Line(geometry, material);
+
+		// Position the orbital path at the orbit center
+		orbitalPath.position.copy(this.orbitCenter);
+
+		// Add to scene
+		this.game.scene.add(orbitalPath);
 	}
 }

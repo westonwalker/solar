@@ -157,6 +157,30 @@ class UIManager {
 		}, duration);
 	}
 
+	// Show autopilot message below the ship instead of in the center
+	showAutopilotMessage(message, duration = 3000) {
+		// Create message element
+		const messageElement = document.createElement("div");
+		messageElement.className = "autopilot-message";
+		messageElement.textContent = message;
+
+		// Add to DOM
+		document.body.appendChild(messageElement);
+
+		// Animate in
+		setTimeout(() => {
+			messageElement.classList.add("visible");
+		}, 10);
+
+		// Remove after duration
+		setTimeout(() => {
+			messageElement.classList.remove("visible");
+			setTimeout(() => {
+				messageElement.remove();
+			}, 500);
+		}, duration);
+	}
+
 	showDamageIndicator(damage) {
 		// Create damage indicator
 		const indicator = document.createElement("div");

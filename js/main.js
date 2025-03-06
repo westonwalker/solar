@@ -37,6 +37,27 @@ document.addEventListener("DOMContentLoaded", () => {
             opacity: 1;
         }
         
+        .autopilot-message {
+            position: fixed;
+            top: 65%;  /* Position below the center of the screen */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #0ff;  /* Cyan color to match UI theme */
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0ff;
+            opacity: 0;
+            transition: opacity 0.5s;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            z-index: 100;
+        }
+        
+        .autopilot-message.visible {
+            opacity: 1;
+        }
+        
         .damage-indicator {
             position: fixed;
             top: 50%;

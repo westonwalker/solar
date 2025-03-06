@@ -25,6 +25,12 @@ class PlayerShip extends Ship {
 		this.weaponCooldown = 0.2; // Time between shots in seconds
 		this.lastFireTime = 0;
 
+		// Autopilot properties
+		this.isAutopilotActive = false;
+		this.autopilotTarget = null;
+		this.autopilotCloseDistance = 150; // Distance to consider "close" to planet
+		this.autopilotFollowDistance = 200; // Distance to maintain when following
+
 		// Player-specific properties
 		this.input = {
 			forward: false,
@@ -145,6 +151,9 @@ class PlayerShip extends Ship {
 			case "KeyV":
 				this.isBreaking = true;
 				break;
+			case "KeyR":
+				this.toggleAutopilot();
+				break;
 			case "Mouse1":
 			case "Space":
 				this.input.fire = true;
@@ -192,96 +201,101 @@ class PlayerShip extends Ship {
 	}
 
 	update(deltaTime) {
-		// Update turbo status
-		this.isTurboActive = this.input.turbo;
-		const currentMaxSpeed = this.isTurboActive
-			? this.maxSpeed * this.turboMultiplier
-			: this.maxSpeed;
-		const currentAcceleration = this.isTurboActive
-			? this.acceleration * this.turboMultiplier
-			: this.acceleration;
-
-		// Update engine visuals
-		this.isEngineActive = this.input.forward;
-		if (this.isEngineActive) {
-			const scale = this.isTurboActive ? 1.5 : 1.0;
-			this.engineExhaust.scale.set(scale, scale, scale * 1.5);
-			this.engineLight.intensity = this.isTurboActive ? 2 : 1;
-
-			// Animate exhaust
-			this.engineExhaust.material.emissiveIntensity =
-				0.5 + Math.random() * 0.5;
-			this.engineNozzle.material.emissiveIntensity =
-				0.2 + Math.random() * 0.3;
+		// Handle autopilot if active
+		if (this.isAutopilotActive && this.autopilotTarget) {
+			this.updateAutopilot(deltaTime);
 		} else {
-			this.engineExhaust.scale.set(0, 0, 0);
-			this.engineLight.intensity = 0;
-			this.engineNozzle.material.emissiveIntensity = 0;
-		}
+			// Update turbo status
+			this.isTurboActive = this.input.turbo;
+			const currentMaxSpeed = this.isTurboActive
+				? this.maxSpeed * this.turboMultiplier
+				: this.maxSpeed;
+			const currentAcceleration = this.isTurboActive
+				? this.acceleration * this.turboMultiplier
+				: this.acceleration;
 
-		// Handle braking
-		if (this.isBreaking && this.velocity.length() > 0) {
-			const brakingForce = Math.min(
-				this.deceleration * deltaTime,
-				this.velocity.length()
-			);
-			this.velocity.multiplyScalar(
-				1 - brakingForce / this.velocity.length()
-			);
-		}
+			// Update engine visuals
+			this.isEngineActive = this.input.forward;
+			if (this.isEngineActive) {
+				const scale = this.isTurboActive ? 1.5 : 1.0;
+				this.engineExhaust.scale.set(scale, scale, scale * 1.5);
+				this.engineLight.intensity = this.isTurboActive ? 2 : 1;
 
-		// Handle movement
-		const direction = new THREE.Vector3();
-
-		// Forward/backward movement in local space
-		if (this.input.forward) {
-			direction.z -= 1;
-		}
-		if (this.input.backward) {
-			direction.z += 1;
-		}
-
-		// Handle all rotations
-		if (this.input.left) {
-			this.rotate(new THREE.Vector3(0, 1, 0), deltaTime);
-		}
-		if (this.input.right) {
-			this.rotate(new THREE.Vector3(0, -1, 0), deltaTime);
-		}
-		if (this.input.up) {
-			this.rotate(new THREE.Vector3(1, 0, 0), deltaTime);
-		}
-		if (this.input.down) {
-			this.rotate(new THREE.Vector3(-1, 0, 0), deltaTime);
-		}
-		if (this.input.rollLeft) {
-			this.rotate(new THREE.Vector3(0, 0, 1), deltaTime);
-		}
-		if (this.input.rollRight) {
-			this.rotate(new THREE.Vector3(0, 0, -1), deltaTime);
-		}
-
-		// Transform direction to world space
-		direction.applyQuaternion(this.quaternion);
-
-		if (direction.lengthSq() > 0) {
-			direction.normalize();
-
-			// Create a temporary acceleration vector
-			const acceleration = direction.multiplyScalar(
-				currentAcceleration * deltaTime
-			);
-			this.velocity.add(acceleration);
-
-			// Limit speed
-			if (this.velocity.length() > currentMaxSpeed) {
-				this.velocity.normalize().multiplyScalar(currentMaxSpeed);
+				// Animate exhaust
+				this.engineExhaust.material.emissiveIntensity =
+					0.5 + Math.random() * 0.5;
+				this.engineNozzle.material.emissiveIntensity =
+					0.2 + Math.random() * 0.3;
+			} else {
+				this.engineExhaust.scale.set(0, 0, 0);
+				this.engineLight.intensity = 0;
+				this.engineNozzle.material.emissiveIntensity = 0;
 			}
-		}
 
-		// Handle weapons
-		if (this.input.fire) {
-			this.fireWeapon(0);
+			// Handle braking
+			if (this.isBreaking && this.velocity.length() > 0) {
+				const brakingForce = Math.min(
+					this.deceleration * deltaTime,
+					this.velocity.length()
+				);
+				this.velocity.multiplyScalar(
+					1 - brakingForce / this.velocity.length()
+				);
+			}
+
+			// Handle movement
+			const direction = new THREE.Vector3();
+
+			// Forward/backward movement in local space
+			if (this.input.forward) {
+				direction.z -= 1;
+			}
+			if (this.input.backward) {
+				direction.z += 1;
+			}
+
+			// Handle all rotations
+			if (this.input.left) {
+				this.rotate(new THREE.Vector3(0, 1, 0), deltaTime);
+			}
+			if (this.input.right) {
+				this.rotate(new THREE.Vector3(0, -1, 0), deltaTime);
+			}
+			if (this.input.up) {
+				this.rotate(new THREE.Vector3(1, 0, 0), deltaTime);
+			}
+			if (this.input.down) {
+				this.rotate(new THREE.Vector3(-1, 0, 0), deltaTime);
+			}
+			if (this.input.rollLeft) {
+				this.rotate(new THREE.Vector3(0, 0, 1), deltaTime);
+			}
+			if (this.input.rollRight) {
+				this.rotate(new THREE.Vector3(0, 0, -1), deltaTime);
+			}
+
+			// Transform direction to world space
+			direction.applyQuaternion(this.quaternion);
+
+			if (direction.lengthSq() > 0) {
+				direction.normalize();
+
+				// Create a temporary acceleration vector
+				const acceleration = direction.multiplyScalar(
+					currentAcceleration * deltaTime
+				);
+				this.velocity.add(acceleration);
+
+				// Limit speed
+				if (this.velocity.length() > currentMaxSpeed) {
+					this.velocity.normalize().multiplyScalar(currentMaxSpeed);
+				}
+			}
+
+			// Handle weapons
+			if (this.input.fire) {
+				this.fireWeapon(0);
+			}
 		}
 
 		// Update planet targeting
@@ -449,5 +463,195 @@ class PlayerShip extends Ship {
 				planet.hideReticule();
 			}
 		});
+
+		// If autopilot is active but target is no longer targeted, deactivate autopilot
+		if (
+			this.isAutopilotActive &&
+			this.autopilotTarget &&
+			!this.autopilotTarget.isTargeted
+		) {
+			this.deactivateAutopilot();
+		}
+	}
+
+	// Toggle autopilot for the currently targeted planet
+	toggleAutopilot() {
+		if (this.isAutopilotActive) {
+			this.deactivateAutopilot();
+		} else {
+			this.activateAutopilot();
+		}
+	}
+
+	// Activate autopilot for the currently targeted planet
+	activateAutopilot() {
+		// Find the currently targeted planet
+		const targetedPlanet = this.game.entities.find(
+			(entity) => entity instanceof Planet && entity.isTargeted
+		);
+
+		if (targetedPlanet) {
+			this.autopilotTarget = targetedPlanet;
+			this.isAutopilotActive = true;
+
+			// Show message to user
+			if (this.game.ui) {
+				this.game.ui.showAutopilotMessage(
+					`Autopilot engaged: ${targetedPlanet.name}`,
+					3000
+				);
+			}
+
+			console.log(`Autopilot engaged: ${targetedPlanet.name}`);
+		} else {
+			console.log("No planet targeted for autopilot");
+			if (this.game.ui) {
+				this.game.ui.showAutopilotMessage(
+					"No planet targeted for autopilot",
+					3000
+				);
+			}
+		}
+	}
+
+	// Deactivate autopilot
+	deactivateAutopilot() {
+		if (this.isAutopilotActive) {
+			this.isAutopilotActive = false;
+			this.autopilotTarget = null;
+
+			// Show message to user
+			if (this.game.ui) {
+				this.game.ui.showAutopilotMessage("Autopilot disengaged", 3000);
+			}
+
+			console.log("Autopilot disengaged");
+		}
+	}
+
+	// Update autopilot logic
+	updateAutopilot(deltaTime) {
+		if (!this.autopilotTarget) return;
+
+		// Calculate distance to target
+		const distanceToTarget = this.position.distanceTo(
+			this.autopilotTarget.position
+		);
+
+		// Calculate direction to target
+		const directionToTarget = new THREE.Vector3();
+		directionToTarget
+			.subVectors(this.autopilotTarget.position, this.position)
+			.normalize();
+
+		// Always face the target
+		this.lookAt(this.autopilotTarget.position);
+
+		// Determine if we're close enough to the planet
+		const isClose =
+			distanceToTarget <=
+			this.autopilotCloseDistance + this.autopilotTarget.radius;
+
+		if (isClose) {
+			// We're close to the planet, so follow it at a fixed distance
+			// Calculate the desired position (at a fixed distance from the planet)
+			const desiredDistance =
+				this.autopilotFollowDistance + this.autopilotTarget.radius;
+
+			// Calculate the desired velocity to match the planet's orbital velocity
+			const planetVelocity = new THREE.Vector3();
+
+			// If the planet has an orbit speed, calculate its tangential velocity
+			if (
+				this.autopilotTarget.orbitSpeed &&
+				this.autopilotTarget.orbitCenter
+			) {
+				// Get the direction from orbit center to planet
+				const orbitDirection = new THREE.Vector3();
+				orbitDirection
+					.subVectors(
+						this.autopilotTarget.position,
+						this.autopilotTarget.orbitCenter
+					)
+					.normalize();
+
+				// Calculate the perpendicular vector (tangent to orbit)
+				const tangent = new THREE.Vector3(
+					-orbitDirection.z,
+					0,
+					orbitDirection.x
+				).normalize();
+
+				// Calculate the orbital velocity magnitude (speed = distance * angular velocity)
+				const orbitSpeed =
+					this.autopilotTarget.orbitDistance *
+					this.autopilotTarget.orbitSpeed;
+
+				// Set the planet velocity to the tangential velocity
+				planetVelocity.copy(tangent).multiplyScalar(orbitSpeed);
+			}
+
+			// Calculate the desired position (at a fixed distance from the planet in the direction from planet to ship)
+			const fromPlanetToShip = new THREE.Vector3();
+			fromPlanetToShip
+				.subVectors(this.position, this.autopilotTarget.position)
+				.normalize();
+
+			const desiredPosition = new THREE.Vector3();
+			desiredPosition
+				.copy(this.autopilotTarget.position)
+				.add(fromPlanetToShip.multiplyScalar(desiredDistance));
+
+			// Calculate the direction to the desired position
+			const directionToDesired = new THREE.Vector3();
+			directionToDesired
+				.subVectors(desiredPosition, this.position)
+				.normalize();
+
+			// Calculate the desired velocity (to reach the desired position + match planet velocity)
+			const desiredVelocity = new THREE.Vector3();
+			desiredVelocity.copy(directionToDesired).multiplyScalar(50); // Base velocity towards desired position
+			desiredVelocity.add(planetVelocity); // Add planet's orbital velocity
+
+			// Gradually adjust our velocity to match the desired velocity
+			const adjustment = new THREE.Vector3();
+			adjustment
+				.subVectors(desiredVelocity, this.velocity)
+				.multiplyScalar(2 * deltaTime);
+			this.velocity.add(adjustment);
+
+			// Limit speed to avoid overshooting
+			const maxFollowSpeed = 100;
+			if (this.velocity.length() > maxFollowSpeed) {
+				this.velocity.normalize().multiplyScalar(maxFollowSpeed);
+			}
+		} else {
+			// We're still traveling to the planet
+			// Accelerate towards the target
+			const acceleration = directionToTarget.multiplyScalar(
+				this.acceleration * deltaTime
+			);
+			this.velocity.add(acceleration);
+
+			// Limit speed based on distance (slow down as we approach)
+			const distanceFactor = Math.min(1, distanceToTarget / 1000);
+			const approachSpeed = this.maxSpeed * (0.5 + 0.5 * distanceFactor);
+
+			if (this.velocity.length() > approachSpeed) {
+				this.velocity.normalize().multiplyScalar(approachSpeed);
+			}
+		}
+
+		// Update engine visuals based on autopilot status
+		this.isEngineActive = true;
+		const scale = isClose ? 0.8 : 1.2;
+		this.engineExhaust.scale.set(scale, scale, scale * 1.5);
+		this.engineLight.intensity = isClose ? 0.8 : 1.5;
+
+		// Animate exhaust
+		this.engineExhaust.material.emissiveIntensity =
+			0.5 + Math.random() * 0.5;
+		this.engineNozzle.material.emissiveIntensity =
+			0.2 + Math.random() * 0.3;
 	}
 }

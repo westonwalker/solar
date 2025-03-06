@@ -265,15 +265,25 @@ class WorldGenerator {
 			const moonX = Math.cos(moonAngle) * moonData.distance;
 			const moonZ = Math.sin(moonAngle) * moonData.distance;
 
-			// Create the moon
+			// Ensure planet position is valid
+			if (!planet || !planet.position) {
+				console.error(
+					"Invalid planet or planet position for moon creation"
+				);
+				return;
+			}
+
+			// Create the moon with a cloned position to avoid reference issues
 			const moon = new Planet(this.game, {
+				name: moonData.name || "Moon",
 				radius: moonData.radius,
 				type: "rocky",
 				color: moonData.color,
 				rotationSpeed: moonData.rotationSpeed,
 				orbitSpeed: moonData.orbitSpeed,
 				orbitDistance: moonData.distance,
-				orbitCenter: planet.position.clone(), // Clone the position to avoid reference issues
+				// Clone the position to avoid reference issues
+				orbitCenter: planet.position.clone(),
 			});
 
 			// Position relative to planet
@@ -283,7 +293,7 @@ class WorldGenerator {
 				planet.position.z + moonZ
 			);
 
-			moon.name = moonData.name;
+			moon.name = moonData.name || "Moon";
 			moon.isPlanetMoon = true;
 			moon.parentPlanet = planet;
 		});
